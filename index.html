@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="h-full select-none">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>經典顏色反應訓練網站</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            // Muted, eye-friendly color palette (Morandi/Warm Tones)
+            surface: {
+              base: '#121824',
+              card: '#1e2638',
+              border: '#2a344a',
+              hover: '#263147'
+            },
+            soft: {
+              text: '#e2e8f0',
+              muted: '#94a3b8',
+              accent: '#818cf8',
+              waiting: '#7f4f46',    // Soft Terracotta Warmth
+              ready: '#4d7a64',      // Soft Sage Green
+              readyHover: '#3d6350',
+              waitingHover: '#6b4139'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .glass-panel {
+      background: rgba(30, 38, 56, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+  </style>
+</head>
+<body class="h-full bg-surface-base text-soft-text font-sans flex flex-col justify-between overflow-x-hidden relative">
+
+  <!-- Header -->
+  <header class="relative z-20 max-w-4xl w-full mx-auto p-4 sm:p-6 flex justify-between items-center border-b border-surface-border/50">
+    <div class="flex items-center space-x-3">
+      <div class="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300">
+        <i data-lucide="zap" class="w-5 h-5"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-lg sm:text-xl tracking-tight text-slate-100">
+          經典顏色反應訓練
+        </h1>
+        <p class="text-xs text-soft-muted">柔和護眼視覺與專注練習</p>
+      </div>
+    </div>
+
+    <!-- Right Controls -->
+    <div class="flex items-center space-x-2">
+      <!-- Quick Reset Button in Header -->
+      <button onclick="quickReset(event)" class="px-3 py-2 rounded-xl bg-indigo-600/30 text-indigo-200 border border-indigo-500/30 hover:bg-indigo-600/50 transition-all flex items-center gap-1.5 text-xs font-semibold" title="快捷鍵 R / Esc">
+        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+        <span>快速重置 <span class="opacity-60 text-[10px] font-mono">(R)</span></span>
+      </button>
+
+      <button id="audioToggle" onclick="toggleAudio(event)" class="p-2.5 rounded-xl glass-panel text-soft-muted hover:text-slate-100 transition-all" title="切換音效">
+        <i data-lucide="volume-2" id="audioIcon" class="w-5 h-5"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Navigation / Mode Selection -->
+  <nav class="max-w-4xl w-full mx-auto px-4 pt-4 sm:pt-6">
+    <div class="grid grid-cols-2 gap-2 bg-surface-card p-1.5 rounded-2xl border border-surface-border">
+      <button id="modeBtn-standard" onclick="switchMode('standard')" class="py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 bg-indigo-600/30 text-indigo-200 border border-indigo-500/30">
+        <i data-lucide="target" class="w-4 h-4"></i>
+        <span>單次標準測試</span>
+      </button>
+      <button id="modeBtn-multi" onclick="switchMode('multi')" class="py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all text-soft-muted hover:text-slate-200 flex items-center justify-center gap-2">
+        <i data-lucide="layers" class="w-4 h-4"></i>
+        <span>5 回合訓練模式</span>
+      </button>
+    </div>
+
+    <!-- Sub-info -->
+    <div id="modeConfigBar" class="mt-3 flex justify-between items-center text-xs text-soft-muted px-1">
+      <span id="modeHelpText">單次練習模式：每一次點擊獲得即時數據</span>
+      <span class="font-mono text-[11px] opacity-75">提示: 按 [R] 或 [Esc] 可隨時重置</span>
+    </div>
+  </nav>
+
+  <!-- Interactive Test Area -->
+  <main class="flex-1 flex flex-col justify-center items-center px-4 py-3 relative z-10">
+    <div id="testBox" onclick="handleBoxClick()" 
+         class="w-full max-w-2xl h-80 sm:h-96 rounded-3xl cursor-pointer transition-all duration-300 flex flex-col items-center justify-center p-6 text-center shadow-xl relative overflow-hidden bg-surface-card border border-surface-border hover:border-slate-700">
+      
+      <!-- Quick Reset Overlay Button inside Test Area -->
+      <button onclick="quickReset(event)" class="absolute top-4 right-4 p-2 rounded-lg bg-black/20 hover:bg-black/40 text-soft-muted hover:text-slate-100 transition-all flex items-center gap-1 text-xs border border-white/5">
+        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+        <span>重置</span>
+      </button>
+
+      <!-- Icon Container -->
+      <div id="statusIcon" class="w-16 h-16 rounded-2xl bg-indigo-500/10 text-indigo-300 flex items-center justify-center mb-4 transition-all duration-300">
+        <i data-lucide="mouse-pointer" class="w-8 h-8"></i>
+      </div>
+
+      <!-- Main Status Title -->
+      <h2 id="statusTitle" class="text-2xl sm:text-3xl font-bold text-slate-100 tracking-wide">
+        點擊區域開始測試
+      </h2>
+
+      <!-- Subtitle -->
+      <p id="statusDesc" class="text-xs sm:text-sm text-soft-muted mt-2 max-w-md leading-relaxed">
+        點擊後畫面將轉為柔和暗紅背景，請於出現「鼠尾草綠」時點擊螢幕。
+      </p>
+
+      <!-- Multi Round Indicator -->
+      <div id="multiProgress" class="hidden mt-4 px-4 py-1.5 rounded-full bg-slate-900/60 text-indigo-300 text-xs font-mono border border-indigo-500/20">
+        當前回合: 第 1 / 5 回合
+      </div>
+
+      <!-- Action Prompt -->
+      <div id="subPrompt" class="text-xs font-mono text-indigo-300/80 mt-6 tracking-wider">
+        [ 點擊此處開始 ]
+      </div>
+    </div>
+  </main>
+
+  <!-- Statistics & Recent History Panel -->
+  <footer class="relative z-20 max-w-4xl w-full mx-auto p-4 sm:p-6 space-y-4">
+    
+    <!-- Top Numbers Grid -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <!-- Best Attempt -->
+      <div class="glass-panel p-3.5 rounded-2xl flex flex-col justify-between">
+        <div class="text-xs text-soft-muted font-medium flex items-center gap-1.5">
+          <i data-lucide="award" class="w-4 h-4 text-indigo-300"></i>
+          個人最佳數據
+        </div>
+        <div id="bestScore" class="text-xl sm:text-2xl font-bold font-mono text-slate-100 mt-1">
+          --- ms
+        </div>
+      </div>
+
+      <!-- Last 3 Avg -->
+      <div class="glass-panel p-3.5 rounded-2xl flex flex-col justify-between">
+        <div class="text-xs text-soft-muted font-medium flex items-center gap-1.5">
+          <i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-300"></i>
+          前三次平均
+        </div>
+        <div id="avgScore" class="text-xl sm:text-2xl font-bold font-mono text-slate-100 mt-1">
+          --- ms
+        </div>
+      </div>
+
+      <!-- Cumulative Count -->
+      <div class="glass-panel p-3.5 rounded-2xl sm:flex flex-col justify-between col-span-2 sm:col-span-1 hidden">
+        <div class="text-xs text-soft-muted font-medium flex items-center gap-1.5">
+          <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+          累積完成次數
+        </div>
+        <div id="totalTests" class="text-xl sm:text-2xl font-bold font-mono text-slate-100 mt-1">
+          0 次
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Attempts Detailed Log -->
+    <div class="glass-panel p-4 sm:p-5 rounded-2xl space-y-3">
+      <div class="flex justify-between items-center">
+        <h3 class="text-xs font-mono font-semibold text-soft-muted uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="history" class="w-4 h-4 text-indigo-300"></i>
+          最近三次紀錄與數據差
+        </h3>
+        <span id="diffLabel" class="text-xs font-mono text-soft-muted">---</span>
+      </div>
+
+      <!-- 3 Slots -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="attemptsContainer">
+        <!-- Slot 1 -->
+        <div class="bg-surface-base/80 border border-surface-border rounded-xl p-3 space-y-1">
+          <div class="flex justify-between items-center text-[11px] text-soft-muted font-mono">
+            <span>第 1 次 (最新)</span>
+            <span id="tag-1" class="text-indigo-300"></span>
+          </div>
+          <div id="score-1" class="text-lg font-bold font-mono text-slate-100">---</div>
+          <div class="w-full bg-surface-border h-1 rounded-full overflow-hidden mt-1">
+            <div id="bar-1" class="bg-indigo-400 h-full w-0 transition-all duration-300"></div>
+          </div>
+        </div>
+
+        <!-- Slot 2 -->
+        <div class="bg-surface-base/80 border border-surface-border rounded-xl p-3 space-y-1">
+          <div class="flex justify-between items-center text-[11px] text-soft-muted font-mono">
+            <span>第 2 次</span>
+            <span id="tag-2" class="text-soft-muted"></span>
+          </div>
+          <div id="score-2" class="text-lg font-bold font-mono text-slate-300">---</div>
+          <div class="w-full bg-surface-border h-1 rounded-full overflow-hidden mt-1">
+            <div id="bar-2" class="bg-indigo-400/60 h-full w-0 transition-all duration-300"></div>
+          </div>
+        </div>
+
+        <!-- Slot 3 -->
+        <div class="bg-surface-base/80 border border-surface-border rounded-xl p-3 space-y-1">
+          <div class="flex justify-between items-center text-[11px] text-soft-muted font-mono">
+            <span>第 3 次</span>
+            <span id="tag-3" class="text-soft-muted"></span>
+          </div>
+          <div id="score-3" class="text-lg font-bold font-mono text-slate-400">---</div>
+          <div class="w-full bg-surface-border h-1 rounded-full overflow-hidden mt-1">
+            <div id="bar-3" class="bg-indigo-400/30 h-full w-0 transition-all duration-300"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- 5-Round Stats Modal Popup -->
+  <div id="multiModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="glass-panel bg-surface-card border border-surface-border max-w-lg w-full rounded-3xl p-6 shadow-2xl space-y-5 relative animate-in fade-in zoom-in duration-200">
+      
+      <!-- Modal Header -->
+      <div class="flex justify-between items-center border-b border-surface-border/60 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300">
+            <i data-lucide="award" class="w-5 h-5"></i>
+          </div>
+          <h3 class="font-bold text-lg text-slate-100">5 回合訓練統計數據</h3>
+        </div>
+        <button onclick="closeModal()" class="text-soft-muted hover:text-slate-100 p-1.5 rounded-lg hover:bg-surface-hover transition-all">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Main Average Box -->
+      <div class="bg-surface-base/90 rounded-2xl p-4 text-center border border-indigo-500/20 space-y-1">
+        <div class="text-xs text-soft-muted">5 回合平均反應時間</div>
+        <div class="text-4xl font-bold font-mono text-indigo-300" id="modalAvg">--- ms</div>
+      </div>
+
+      <!-- Key Metrics Grid -->
+      <div class="grid grid-cols-3 gap-2 text-center">
+        <div class="bg-surface-base/60 rounded-xl p-2.5 border border-surface-border">
+          <div class="text-[11px] text-soft-muted">最快成績</div>
+          <div class="text-base font-bold font-mono text-emerald-400 mt-0.5" id="modalBest">--- ms</div>
+        </div>
+        <div class="bg-surface-base/60 rounded-xl p-2.5 border border-surface-border">
+          <div class="text-[11px] text-soft-muted">最慢成績</div>
+          <div class="text-base font-bold font-mono text-amber-400/90 mt-0.5" id="modalWorst">--- ms</div>
+        </div>
+        <div class="bg-surface-base/60 rounded-xl p-2.5 border border-surface-border">
+          <div class="text-[11px] text-soft-muted">穩定度 (波幅)</div>
+          <div class="text-base font-bold font-mono text-indigo-200 mt-0.5" id="modalRange">±--- ms</div>
+        </div>
+      </div>
+
+      <!-- 5 Rounds Breakdown List -->
+      <div class="space-y-1.5">
+        <div class="text-xs text-soft-muted font-mono mb-1">各回合反應明細：</div>
+        <div class="grid grid-cols-5 gap-1.5" id="modalRoundsList">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeModal(); startWaitingState();" class="flex-1 py-3 bg-indigo-600/40 hover:bg-indigo-600/60 border border-indigo-500/40 text-indigo-100 font-semibold rounded-xl transition-all flex items-center justify-center gap-2 text-sm">
+          <i data-lucide="play" class="w-4 h-4"></i>
+          <span>開啟新一輪訓練</span>
+        </button>
+        <button onclick="closeModal()" class="px-4 py-3 bg-surface-base hover:bg-surface-hover border border-surface-border text-soft-muted hover:text-slate-200 font-semibold rounded-xl transition-all text-sm">
+          關閉
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // System & Mode State
+    let currentMode = 'standard'; // 'standard' | 'multi'
+    let currentState = 'start';   // 'start' | 'waiting' | 'ready' | 'result'
+    let startTime = 0;
+    let timerTimeout = null;
+    let audioEnabled = true;
+
+    // Multi-Round State (Strictly 5 Rounds)
+    const multiTotalRounds = 5;
+    let multiCurrentRound = 0;
+    let multiResults = [];
+
+    // Overall History
+    let attempts = [];
+    let bestScore = null;
+
+    // Web Audio Synthesizer
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function playSoftSound(type) {
+      if (!audioEnabled) return;
+      try {
+        initAudio();
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+
+        if (type === 'ready') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(587.33, now); // D5
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+          osc.start(now);
+          osc.stop(now + 0.3);
+        } else if (type === 'click') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(440, now); // A4
+          gain.gain.setValueAtTime(0.1, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+          osc.start(now);
+          osc.stop(now + 0.15);
+        } else if (type === 'early') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(220, now);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+          osc.start(now);
+          osc.stop(now + 0.2);
+        }
+      } catch (e) {
+        console.warn('Audio playback issue', e);
+      }
+    }
+
+    function toggleAudio(e) {
+      if (e) e.stopPropagation();
+      audioEnabled = !audioEnabled;
+      const icon = document.getElementById('audioIcon');
+      if (audioEnabled) {
+        icon.setAttribute('data-lucide', 'volume-2');
+        playSoftSound('click');
+      } else {
+        icon.setAttribute('data-lucide', 'volume-x');
+      }
+      lucide.createIcons();
+    }
+
+    // Switch Modes
+    function switchMode(mode) {
+      quickReset();
+      currentMode = mode;
+
+      const btnStd = document.getElementById('modeBtn-standard');
+      const btnMulti = document.getElementById('modeBtn-multi');
+      const helpText = document.getElementById('modeHelpText');
+
+      if (mode === 'multi') {
+        btnMulti.className = "py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 bg-indigo-600/30 text-indigo-200 border border-indigo-500/30";
+        btnStd.className = "py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all text-soft-muted hover:text-slate-200 flex items-center justify-center gap-2";
+        helpText.innerText = "5 回合訓練模式：連續完成 5 次，第 5 次後統計完整數據";
+      } else {
+        btnStd.className = "py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 bg-indigo-600/30 text-indigo-200 border border-indigo-500/30";
+        btnMulti.className = "py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all text-soft-muted hover:text-slate-200 flex items-center justify-center gap-2";
+        helpText.innerText = "單次練習模式：每一次點擊獲得即時數據";
+      }
+
+      resetBoxToInitial();
+    }
+
+    function resetBoxToInitial() {
+      const box = document.getElementById('testBox');
+      const icon = document.getElementById('statusIcon');
+      const title = document.getElementById('statusTitle');
+      const desc = document.getElementById('statusDesc');
+      const subPrompt = document.getElementById('subPrompt');
+      const progress = document.getElementById('multiProgress');
+
+      box.className = "w-full max-w-2xl h-80 sm:h-96 rounded-3xl cursor-pointer transition-all duration-300 flex flex-col items-center justify-center p-6 text-center shadow-xl relative overflow-hidden bg-surface-card border border-surface-border hover:border-slate-700";
+      icon.className = "w-16 h-16 rounded-2xl bg-indigo-500/10 text-indigo-300 flex items-center justify-center mb-4";
+      icon.innerHTML = `<i data-lucide="mouse-pointer" class="w-8 h-8"></i>`;
+
+      if (currentMode === 'multi') {
+        title.innerText = "5 回合訓練模式";
+        desc.innerText = "將連續進行 5 次測試，中間不顯示單次結果，完畢後顯示綜合統計數據。";
+      } else {
+        title.innerText = "點擊區域開始測試";
+        desc.innerText = "點擊後畫面將轉為柔和暗紅背景，請於出現「鼠尾草綠」時點擊螢幕。";
+      }
+
+      progress.classList.add('hidden');
+      subPrompt.innerText = "[ 點擊此處開始 ]";
+      lucide.createIcons();
+    }
+
+    // Quick Reset Action
+    function quickReset(e) {
+      if (e) e.stopPropagation();
+      clearTimeout(timerTimeout);
+      currentState = 'start';
+      multiCurrentRound = 0;
+      multiResults = [];
+      closeModal();
+      resetBoxToInitial();
+    }
+
+    // Keyboard Shortcuts (R / Esc for Quick Reset)
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'r' || e.key === 'R' || e.key === 'Escape') {
+        quickReset();
+      }
+    });
+
+    // Box Click Routing
+    function handleBoxClick() {
+      initAudio();
+
+      if (currentState === 'start' || currentState === 'result') {
+        if (currentMode === 'multi' && currentState === 'start') {
+          multiCurrentRound = 0;
+          multiResults = [];
+        }
+        startWaitingState();
+      } else if (currentState === 'waiting') {
+        triggerEarlyClick();
+      } else if (currentState === 'ready') {
+        calculateResult();
+      }
+    }
+
+    // Step 1: Muted Terracotta Waiting State
+    function startWaitingState() {
+      currentState = 'waiting';
+      const box = document.getElementById('testBox');
+      const icon = document.getElementById('statusIcon');
+      const title = document.getElementById('statusTitle');
+      const desc = document.getElementById('statusDesc');
+      const subPrompt = document.getElementById('subPrompt');
+      const progress = document.getElementById('multiProgress');
+
+      box.className = "w-full max-w-2xl h-80 sm:h-96 rounded-3xl cursor-pointer transition-all duration-300 flex flex-col items-center justify-center p-6 text-center shadow-xl relative overflow-hidden bg-soft-waiting border border-soft-waitingHover";
+      icon.className = "w-16 h-16 rounded-2xl bg-black/20 text-slate-100 flex items-center justify-center mb-4";
+      icon.innerHTML = `<i data-lucide="clock" class="w-8 h-8 opacity-80 animate-spin"></i>`;
+
+      title.innerText = "請等待綠色出現...";
+      desc.innerText = "放鬆雙眼，保持靜止，請勿提前點擊。";
+      subPrompt.innerText = "[ 準備中 ... ]";
+
+      if (currentMode === 'multi') {
+        progress.classList.remove('hidden');
+        progress.innerText = `當前回合: 第 ${multiCurrentRound + 1} / ${multiTotalRounds} 回合`;
+      } else {
+        progress.classList.add('hidden');
+      }
+
+      lucide.createIcons();
+
+      const delay = 2000 + Math.random() * 2000;
+      clearTimeout(timerTimeout);
+      timerTimeout = setTimeout(() => {
+        triggerReadyState();
+      }, delay);
+    }
+
+    // Step 2: Soft Sage Green Ready State
+    function triggerReadyState() {
+      if (currentState !== 'waiting') return;
+      currentState = 'ready';
+      startTime = performance.now();
+      playSoftSound('ready');
+
+      const box = document.getElementById('testBox');
+      const icon = document.getElementById('statusIcon');
+      const title = document.getElementById('statusTitle');
+      const desc = document.getElementById('statusDesc');
+      const subPrompt = document.getElementById('subPrompt');
+
+      box.className = "w-full max-w-2xl h-80 sm:h-96 rounded-3xl cursor-pointer transition-all duration-150 flex flex-col items-center justify-center p-6 text-center shadow-xl relative overflow-hidden bg-soft-ready border border-soft-readyHover";
+      icon.className = "w-16 h-16 rounded-2xl bg-black/20 text-slate-100 flex items-center justify-center mb-4";
+      icon.innerHTML = `<i data-lucide="check" class="w-8 h-8"></i>`;
+
+      title.innerText = "請點擊！";
+      desc.innerText = "立刻點擊畫面紀錄時間";
+      subPrompt.innerText = "[ 請點擊 ]";
+
+      lucide.createIcons();
+    }
+
+    // Early Click Neutral Response
+    function triggerEarlyClick() {
+      clearTimeout(timerTimeout);
+      currentState = 'start';
+      playSoftSound('early');
+
+      const box = document.getElementById('testBox');
+      const icon = document.getElementById('statusIcon');
+      const title = document.getElementById('statusTitle');
+      const desc = document.getElementById('statusDesc');
+      const subPrompt = document.getElementById('subPrompt');
+      const progress = document.getElementById('multiProgress');
+
+      box.className = "w-full max-w-2xl h-80 sm:h-96 rounded-3xl cursor-pointer transition-all duration-200 flex flex-col items-center justify-center p-6 text-center shadow-xl relative overflow-hidden bg-surface-card border border-surface-border";
+      icon.className = "w-16 h-16 rounded-2xl bg-indigo-500/10 text-indigo-300 flex items-center justify-center mb-4";
+      icon.innerHTML = `<i data-lucide="info" class="w-8 h-8"></i>`;
+
+      title.innerText = "提前點擊";
+      desc.innerText = "請在背景轉為綠色後再點擊。點擊任意處可重試本回合。";
+      subPrompt.innerText = "[ 點擊繼續 ]";
+      progress.classList.add('hidden');
+
+      lucide.createIcons();
+    }
+
+    // Calculate & Process Result
+    function calculateResult() {
+      const endTime = performance.now();
+      const reactionTime = Math.round(endTime - startTime);
+      currentState = 'result';
+      playSoftSound('click');
+
+      // Record to general history
+      attempts.unshift(reactionTime);
+      if (bestScore === null || reactionTime < bestScore) {
+        bestScore = reactionTime;
+      }
+
+      // Handle 5-Round Multi Mode Flow
+      if (currentMode === 'multi') {
+        multiResults.push(reactionTime);
+        multiCurrentRound++;
+
+        if (multiCurrentRound < multiTotalRounds) {
+          // Immediately proceed to next round without revealing current time or showing popup
+          updateStatsUI();
+          startWaitingState();
+          return;
+        } else {
+          // Finished all 5 rounds -> Show 5-Round Modal
+          showMultiStatsModal();
+          resetBoxToInitial();
+          updateStatsUI();
+          return;
+        }
+      }
+
+      // Standard Mode UI
+      const box = document.getElementById('testBox');
+      const icon = document.getElementById('statusIcon');
+      const title = document.getElementById('statusTitle');
+      const desc = document.getElementById('statusDesc');
+      const subPrompt = document.getElementById('subPrompt');
+      const progress = document.getElementById('multiProgress');
+
+      box.className = "w-full max-w-2xl h-80 sm:h-96 rounded-3xl cursor-pointer transition-all duration-200 flex flex-col items-center justify-center p-6 text-center shadow-xl relative overflow-hidden bg-surface-card border border-surface-border";
+      icon.className = "w-16 h-16 rounded-2xl bg-indigo-500/10 text-indigo-300 flex items-center justify-center mb-2";
+      icon.innerHTML = `<i data-lucide="timer" class="w-8 h-8"></i>`;
+
+      title.innerHTML = `<span class="font-mono text-5xl sm:text-6xl text-slate-100 font-bold">${reactionTime}</span> <span class="text-xl text-soft-muted font-normal">ms</span>`;
+      desc.innerText = "點擊任意區域進行下一次測試";
+      subPrompt.innerText = "[ 點擊繼續 ]";
+      progress.classList.add('hidden');
+
+      lucide.createIcons();
+      updateStatsUI();
+    }
+
+    // Show 5-Round Stats Modal
+    function showMultiStatsModal() {
+      if (multiResults.length === 0) return;
+
+      const sum = multiResults.reduce((a, b) => a + b, 0);
+      const avg = Math.round(sum / multiResults.length);
+      const best = Math.min(...multiResults);
+      const worst = Math.max(...multiResults);
+      const range = worst - best;
+
+      document.getElementById('modalAvg').innerText = `${avg} ms`;
+      document.getElementById('modalBest').innerText = `${best} ms`;
+      document.getElementById('modalWorst').innerText = `${worst} ms`;
+      document.getElementById('modalRange').innerText = `±${Math.round(range / 2)} ms`;
+
+      // Render 5 round slots
+      const listContainer = document.getElementById('modalRoundsList');
+      listContainer.innerHTML = multiResults.map((val, idx) => `
+        <div class="bg-surface-base/80 border border-surface-border rounded-xl p-2 text-center">
+          <div class="text-[10px] text-soft-muted">R${idx + 1}</div>
+          <div class="text-xs font-mono font-bold text-slate-100 mt-0.5">${val} <span class="text-[9px] font-normal text-soft-muted">ms</span></div>
+        </div>
+      `).join('');
+
+      document.getElementById('multiModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeModal() {
+      document.getElementById('multiModal').classList.add('hidden');
+    }
+
+    // Objective Statistics Update
+    function updateStatsUI() {
+      // Best & Total Tests
+      document.getElementById('bestScore').innerText = bestScore ? `${bestScore} ms` : "--- ms";
+      document.getElementById('totalTests').innerText = `${attempts.length} 次`;
+
+      // Average of last 3
+      const recent3 = attempts.slice(0, 3);
+      if (recent3.length > 0) {
+        const sum = recent3.reduce((a, b) => a + b, 0);
+        const avg = Math.round(sum / recent3.length);
+        document.getElementById('avgScore').innerText = `${avg} ms`;
+      } else {
+        document.getElementById('avgScore').innerText = "--- ms";
+      }
+
+      // Render 3 Recent Slots
+      const maxTimeRef = 450;
+      for (let i = 1; i <= 3; i++) {
+        const scoreElem = document.getElementById(`score-${i}`);
+        const tagElem = document.getElementById(`tag-${i}`);
+        const barElem = document.getElementById(`bar-${i}`);
+
+        if (recent3[i - 1] !== undefined) {
+          const val = recent3[i - 1];
+          scoreElem.innerText = `${val} ms`;
+
+          const pct = Math.min(100, Math.max(12, Math.round((val / maxTimeRef) * 100)));
+          barElem.style.width = `${pct}%`;
+
+          tagElem.innerText = i === 1 ? "最新" : "";
+        } else {
+          scoreElem.innerText = "---";
+          barElem.style.width = "0%";
+          tagElem.innerText = "";
+        }
+      }
+
+      // Strict Neutral Comparison Difference
+      const diffLabel = document.getElementById('diffLabel');
+      if (recent3.length >= 2) {
+        const diff = recent3[0] - recent3[1];
+        const sign = diff > 0 ? "+" : "";
+        diffLabel.className = "text-xs font-mono text-soft-muted";
+        diffLabel.innerText = `相差 ${sign}${diff} ms`;
+      } else {
+        diffLabel.className = "text-xs font-mono text-soft-muted";
+        diffLabel.innerText = "---";
+      }
+
+      lucide.createIcons();
+    }
+
+    // On Load
+    window.onload = function() {
+      switchMode('standard');
+      lucide.createIcons();
+    };
+  </script>
+</body>
+</html>
